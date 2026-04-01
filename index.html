@@ -837,16 +837,44 @@ EXEMPLOS DO SEU ESTILO:
 
   function removeTyping() { document.getElementById('typing')?.remove(); }
 
-  async function callGemini(userText) {
-    history.push({ role: 'user', parts: [{ text: userText }] });
+  // async function callGemini(userText) {
+  //   history.push({ role: 'user', parts: [{ text: userText }] });
 
+  //   const response = await fetch(
+  //     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
+  //     {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({
+  //         system_instruction: { parts: [{ text: buildSystemPrompt(userData) }] },
+  //         contents: history,
+  //         generationConfig: { maxOutputTokens: 800, temperature: 0.9 }
+  //       })
+  //     }
+  //   );
+
+  //   if (!response.ok) {
+  //     const err = await response.json().catch(() => ({}));
+  //     throw new Error(err.error?.message || `Erro ${response.status}`);
+  //   }
+
+  //   const data = await response.json();
+  //   const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Erro ao processar resposta.';
+  //   history.push({ role: 'model', parts: [{ text: reply }] });
+  //   return reply;
+  // }
+
+  async function callGemini(userText, retries = 2) {
+  history.push({ role: 'user', parts: [{ text: userText }] });
+
+  for (let i = 0; i <= retries; i++) {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: buildSystemPrompt(userData) }] },
+          systemInstruction: { parts: [{ text: buildSystemPrompt(userData) }] }, 
           contents: history,
           generationConfig: { maxOutputTokens: 800, temperature: 0.9 }
         })
@@ -854,15 +882,22 @@ EXEMPLOS DO SEU ESTILO:
     );
 
     if (!response.ok) {
+      // Se for erro 429 e ainda tivermos tentativas, espera 3 segundos e tenta de novo
+      if (response.status === 429 && i < retries) {
+        await new Promise(r => setTimeout(r, 3000));
+        continue; 
+      }
+      
       const err = await response.json().catch(() => ({}));
       throw new Error(err.error?.message || `Erro ${response.status}`);
     }
 
     const data = await response.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Erro ao processar resposta.';
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'O Don ficou sem palavras (Erro).';
     history.push({ role: 'model', parts: [{ text: reply }] });
     return reply;
   }
+}
 
   async function sendMsg() {
     if (isLoading) return;
