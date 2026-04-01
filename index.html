@@ -591,7 +591,7 @@
     </div>
     <div class="setup-body">
 
-      <!-- <div class="setup-section-label">chave da api — groq (gratuita)</div>
+      <div class="setup-section-label">chave da api — groq (gratuita)</div>
       <div class="api-note">
         Acesse <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>, crie uma chave gratuita e cole abaixo.<br>
         Sua chave fica apenas no seu navegador — nunca é armazenada em servidor algum.
@@ -601,7 +601,7 @@
           <label class="field-label">Chave API Groq *</label>
           <input class="field-input" id="inp-apikey" type="password" placeholder="gsk..."/>
         </div>
-      </div> -->
+      </div>
 
       <div class="setup-section-label">seu perfil financeiro</div>
       <div class="setup-grid">
@@ -699,7 +699,7 @@
 
 </div>
 <script>
-  const API_KEY = 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;
+  let API_KEY = '';
   let userData = {};
   let history = [];
   let isLoading = false;
@@ -745,6 +745,13 @@ EXEMPLOS DO SEU ESTILO:
   }
 
   function startChat() {
+    const key = document.getElementById('inp-apikey').value.trim();
+    if (!key || key.length < 10) {
+      document.getElementById('error-note').style.display = 'block';
+      return;
+    }
+
+    API_KEY = key;
     userData = {
       nome:    document.getElementById('inp-nome').value.trim(),
       renda:   parseFloat(document.getElementById('inp-renda').value)   || 0,
@@ -754,10 +761,6 @@ EXEMPLOS DO SEU ESTILO:
       divida:  parseFloat(document.getElementById('inp-divida').value)  || 0,
       reserva: parseFloat(document.getElementById('inp-reserva').value) || 0,
     };
-
-    sessionStorage.setItem('don_data', JSON.stringify(userData));
-    showChat();
-  }
 
     sessionStorage.setItem('don_key', API_KEY);
     sessionStorage.setItem('don_data', JSON.stringify(userData));
@@ -910,7 +913,7 @@ EXEMPLOS DO SEU ESTILO:
   }
 
   function resetApp() {
-    sessionStorage.removeItem('don_data');
+    sessionStorage.clear();
     history = [];
     document.getElementById('messages').innerHTML = '';
     document.getElementById('chat-area').classList.add('hidden');
@@ -920,8 +923,9 @@ EXEMPLOS DO SEU ESTILO:
 
   // Restore session
   (function () {
+    const k = sessionStorage.getItem('don_key');
     const d = sessionStorage.getItem('don_data');
-    if (d) { userData = JSON.parse(d); showChat(); }
+    if (k && d) { API_KEY = k; userData = JSON.parse(d); showChat(); }
   })();
 </script>
 </body>
